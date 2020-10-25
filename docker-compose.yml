@@ -1,4 +1,4 @@
-version: "1"
+version: "3.7"
 services:
   gluetun:
     container_name: gluetun
@@ -115,5 +115,5 @@ services:
       - ${ROOT}/config/bazarr:/config # config files
       - ${ROOT}/complete/movies:/movies # movies folder
       - ${ROOT}/complete/tv:/tv # tv shows folder
-    ports:
-      - 6767:6767
+#    ports:
+#      - 6767:6767
