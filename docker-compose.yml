@@ -1,119 +1,124 @@
-version: "3.7"
 services:
   gluetun:
-    container_name: gluetun
     image: qmcgaw/private-internet-access
+    container_name: gluetun
     cap_add:
-      - NET_ADMIN # required to modify network interfaces
-    #restart: unless-stopped
-    restart: always
+      - NET_ADMIN
     network_mode: bridge
     ports:
-      #- 9091:9091 # Transmission web UI
-      #- 51413:51413 # Transmission bittorrent daemon
-      #- 51413:51413/udp # Transmission bittorrent daemon
-      - 8112:8112 # port for deluge web UI to be reachable from local network
-    volumes:
-      - ${ROOT}/gluetun:/gluetun
+      - 8888:8888/tcp # Tinyproxy
+      - 8388:8388/tcp # Shadowsocks
+      - 8388:8388/udp # Shadowsocks
+      - 8000:8000/tcp # Built-in HTTP control server
+      - 8112:8112 # deluge
+      - 8989:8989 # sonarr
+      - 9117:9117 # jackett
+      - 7878:7878 # radarr
+      - 6789:6789 # nzbget
+      - 5076:5076 # hydra2
+    # command:
     environment:
-      # More variables are available, see the readme table
       - VPNSP=private internet access
-
-      # Timezone for accurate logs times
       - TZ=${TZ}
-
-      # All VPN providers
-      - USER=${VPN_User}
-
-      # All VPN providers but Mullvad
-      - PASSWORD=${VPN_Pass}
-
-      # All VPN providers but Mullvad
-      - REGION=US Chicago
+      - USER=XXXXXXX # Your username
+      - PASSWORD=YYYYYY # Your password
+      - REGION=ZZZZZZ # Your region, e.g. US East. No quotes.
+      - EXTRA_SUBNETS=10.0.0.0/8
+    restart: unless-stopped
 
   deluge:
     container_name: deluge
-    image: linuxserver/deluge:latest
+    image: linuxserver/deluge
     restart: unless-stopped
-    network_mode: "service:gluetun" # run on the vpn network
     environment:
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - ${ROOT}/downloads:/downloads # downloads folder
-      - ${ROOT}/config/deluge:/config # config files
-
-  jackett:
-    container_name: jackett
-    image: linuxserver/jackett:latest
-    restart: unless-stopped
-    network_mode: "service:gluetun"
-    environment:
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${ROOT}/downloads/torrent-blackhole:/downloads # place where to put .torrent files for manual download
-      - ${ROOT}/config/jackett:/config # config files
-
-#  nzbget:
-#    container_name: nzbget
-#    image: linuxserver/nzbget:latest
-#    restart: unless-stopped
-#    network_mode: host
-#    environment:
-#      - PUID=${PUID} # default user id, defined in .env
-#      - PGID=${PGID} # default group id, defined in .env
-#      - TZ=${TZ} # timezone, defined in .env
-#    volumes:
-#      - ${ROOT}/downloads:/downloads # download folder
-#      - ${ROOT}/config/nzbget:/config # config files
+      - ${MEDIA}/unsorted:/downloads
+      - ${ROOT}/config/deluge:/config
+    network_mode: service:gluetun 
+    depends_on:
+      - jackett
+      - gluetun
 
   sonarr:
     container_name: sonarr
-    image: linuxserver/sonarr:latest
+    image: linuxserver/sonarr
     restart: unless-stopped
-    network_mode: "service:gluetun"
     environment:
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${ROOT}/config/sonarr:/config # config files
-      - ${ROOT}/complete/tv:/tv # tv shows folder
-      - ${ROOT}/downloads:/downloads # download folder
+      - ${ROOT}/config/sonarr:/config 
+      - ${MEDIA}/tv:/tv 
+      - ${MEDIA}/unsorted:/downloads 
+    network_mode: service:gluetun
+    depends_on:
+      - jackett
+      - gluetun
+
+  jackett:
+    container_name: jackett
+    image: linuxserver/jackett
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${MEDIA}/unsorted:/downloads
+      - ${ROOT}/config/jackett:/config
+    network_mode: service:gluetun
+    depends_on:
+      - gluetun
 
   radarr:
     container_name: radarr
-    image: linuxserver/radarr:latest
+    image: linuxserver/radarr
     restart: unless-stopped
-    network_mode: "service:gluetun"
     environment:
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ${ROOT}/config/radarr:/config # config files
-      - ${ROOT}/complete/movies:/movies # movies folder
-      - ${ROOT}/downloads:/downloads # download folder
+      - ${ROOT}/config/radarr:/config 
+      - ${MEDIA}/movies:/movies 
+      - ${MEDIA}/unsorted:/downloads
+    network_mode: service:gluetun
+    depends_on:
+      - jackett
+      - gluetun
 
-  bazarr:
-    container_name: bazarr
-    image: linuxserver/bazarr
+  nzbget:
+    container_name: nzbget
+    image: linuxserver/nzbget
     restart: unless-stopped
-    network_mode: "service:gluetun"
     environment:
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
-      - UMASK_SET=022 #optional
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ} 
     volumes:
-      - ${ROOT}/config/bazarr:/config # config files
-      - ${ROOT}/complete/movies:/movies # movies folder
-      - ${ROOT}/complete/tv:/tv # tv shows folder
-#    ports:
-#      - 6767:6767
+      - ${MEDIA}/unsorted:/downloads 
+      - ${ROOT}/config/nzbget:/config 
+    network_mode: service:gluetun
+    depends_on:
+      - jackett
+      - gluetun
+
+  hydra2:
+    image: linuxserver/nzbhydra2
+    container_name: hydra2
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID} 
+      - PGID=${PGID} 
+      - TZ=${TZ} 
+    network_mode: service:gluetun
+    volumes:
+      - ${ROOT}/config/hydra2:/config
+      - ${MEDIA}/unsorted:/downloads
+    depends_on:
+      - gluetun
+      - jackett
