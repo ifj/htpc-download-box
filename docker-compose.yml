@@ -9,18 +9,18 @@ services:
     restart: always
     network_mode: bridge
     ports:
-      - 9091:9091 # Transmission web UI
-      - 51413:51413 # Transmission bittorrent daemon
-      - 51413:51413/udp # Transmission bittorrent daemon
+      #- 9091:9091 # Transmission web UI
+      #- 51413:51413 # Transmission bittorrent daemon
+      #- 51413:51413/udp # Transmission bittorrent daemon
       - 8112:8112 # port for deluge web UI to be reachable from local network
     volumes:
-      - /home/odin/docker/projects:/gluetun
+      - ${ROOT}/gluetun:/gluetun
     environment:
       # More variables are available, see the readme table
       - VPNSP=private internet access
 
       # Timezone for accurate logs times
-      - TZ=America/Chicago
+      - TZ=${TZ}
 
       # All VPN providers
       - USER=${VPN_User}
@@ -35,7 +35,7 @@ services:
     container_name: deluge
     image: linuxserver/deluge:latest
     restart: unless-stopped
-    network_mode: service:vpn # run on the vpn network
+    network_mode: "service:gluetun" # run on the vpn network
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -48,7 +48,7 @@ services:
     container_name: jackett
     image: linuxserver/jackett:latest
     restart: unless-stopped
-    network_mode: host
+    network_mode: "service:gluetun"
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -58,24 +58,24 @@ services:
       - ${ROOT}/downloads/torrent-blackhole:/downloads # place where to put .torrent files for manual download
       - ${ROOT}/config/jackett:/config # config files
 
-  nzbget:
-    container_name: nzbget
-    image: linuxserver/nzbget:latest
-    restart: unless-stopped
-    network_mode: host
-    environment:
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
-    volumes:
-      - ${ROOT}/downloads:/downloads # download folder
-      - ${ROOT}/config/nzbget:/config # config files
+#  nzbget:
+#    container_name: nzbget
+#    image: linuxserver/nzbget:latest
+#    restart: unless-stopped
+#    network_mode: host
+#    environment:
+#      - PUID=${PUID} # default user id, defined in .env
+#      - PGID=${PGID} # default group id, defined in .env
+#      - TZ=${TZ} # timezone, defined in .env
+#    volumes:
+#      - ${ROOT}/downloads:/downloads # download folder
+#      - ${ROOT}/config/nzbget:/config # config files
 
   sonarr:
     container_name: sonarr
     image: linuxserver/sonarr:latest
     restart: unless-stopped
-    network_mode: host
+    network_mode: "service:gluetun"
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -90,7 +90,7 @@ services:
     container_name: radarr
     image: linuxserver/radarr:latest
     restart: unless-stopped
-    network_mode: host
+    network_mode: "service:gluetun"
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
@@ -101,23 +101,11 @@ services:
       - ${ROOT}/complete/movies:/movies # movies folder
       - ${ROOT}/downloads:/downloads # download folder
 
-  plex-server:
-    container_name: plex-server
-    image: plexinc/pms-docker:latest
-    restart: unless-stopped
-    environment:
-      - TZ=${TZ} # timezone, defined in .env
-    network_mode: host
-    volumes:
-      - ${ROOT}/config/plex/db:/config # plex database
-      - ${ROOT}/config/plex/transcode:/transcode # temp transcoded files
-      - ${ROOT}/complete:/data # media library
-
   bazarr:
     container_name: bazarr
     image: linuxserver/bazarr
     restart: unless-stopped
-    network_mode: host
+    network_mode: "service:gluetun"
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
