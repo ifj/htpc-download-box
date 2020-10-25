@@ -91,34 +91,34 @@ services:
       - jackett
       - gluetun
 
-  nzbget:
-    container_name: nzbget
-    image: linuxserver/nzbget
-    restart: unless-stopped
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ} 
-    volumes:
-      - ${MEDIA}/unsorted:/downloads 
-      - ${ROOT}/config/nzbget:/config 
-    network_mode: service:gluetun
-    depends_on:
-      - jackett
-      - gluetun
+#  nzbget:
+#    container_name: nzbget
+#    image: linuxserver/nzbget
+#    restart: unless-stopped
+#    environment:
+#      - PUID=${PUID}
+#      - PGID=${PGID}
+#      - TZ=${TZ} 
+#    volumes:
+#      - ${MEDIA}/unsorted:/downloads 
+#      - ${ROOT}/config/nzbget:/config 
+#    network_mode: service:gluetun
+#    depends_on:
+#      - jackett
+#      - gluetun
 
-  hydra2:
-    image: linuxserver/nzbhydra2
-    container_name: hydra2
-    restart: unless-stopped
-    environment:
-      - PUID=${PUID} 
-      - PGID=${PGID} 
-      - TZ=${TZ} 
-    network_mode: service:gluetun
-    volumes:
-      - ${ROOT}/config/hydra2:/config
-      - ${MEDIA}/unsorted:/downloads
-    depends_on:
-      - gluetun
-      - jackett
+#  hydra2:
+#    image: linuxserver/nzbhydra2
+#    container_name: hydra2
+#    restart: unless-stopped
+#    environment:
+#      - PUID=${PUID} 
+#      - PGID=${PGID} 
+#      - TZ=${TZ} 
+##    network_mode: service:gluetun
+ #   volumes:
+ #     - ${ROOT}/config/hydra2:/config
+ #     - ${MEDIA}/unsorted:/downloads
+ #   depends_on:
+ #     - gluetun
+ #     - jackett
